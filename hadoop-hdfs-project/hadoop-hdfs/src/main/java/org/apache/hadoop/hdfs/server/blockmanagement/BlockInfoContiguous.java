@@ -60,7 +60,7 @@ public class BlockInfoContiguous extends BlockInfo {
      * happen only when replication is manually increased by the user. */
     Object[] old = triplets;
     triplets = new Object[(last+num)*3];
-    System.arraycopy(old, 0, triplets, 0, last*3);
+    System.arraycopy(old, 0, triplets, 0, last * 3);
     return last;
   }
 
@@ -143,5 +143,10 @@ public class BlockInfoContiguous extends BlockInfo {
     ucBlock.setExpectedLocations(targets);
     ucBlock.setBlockCollection(getBlockCollection());
     return ucBlock;
+  }
+
+  @Override
+  public final boolean isStriped() {
+    return false;
   }
 }

@@ -208,7 +208,6 @@ import org.apache.hadoop.hdfs.server.blockmanagement.BlockIdManager;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguousUnderConstruction;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoStripedUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockManager;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeManager;
@@ -2074,7 +2073,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     boolean shouldRecoverNow = (newBlock == null);
 
     BlockInfo oldBlock = file.getLastBlock();
-    assert oldBlock instanceof BlockInfoContiguous;
+    assert !oldBlock.isStriped();
 
     boolean shouldCopyOnTruncate = shouldCopyOnTruncate(file,
         (BlockInfoContiguous) oldBlock);
@@ -3119,7 +3118,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
 
     // choose targets for the new block to be allocated.
-    return getBlockManager().chooseTarget4NewBlock( 
+    return getBlockManager().chooseTarget4NewBlock(
         src, numTargets, clientNode, excludedNodes, blockSize, favoredNodes,
         storagePolicyID);
   }
@@ -3167,8 +3166,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
       // allocate new block, record block locations in INode.
       newBlock = createNewBlock(isStriped);
-      INodesInPath inodesInPath = INodesInPath.fromINode(pendingFile);
-      saveAllocatedBlock(src, inodesInPath, newBlock, targets, isStriped);
+      saveAllocatedBlock(src, fileState.iip, newBlock, targets, isStriped);
 
       persistNewBlock(src, pendingFile);
       offset = pendingFile.computeFileSize();
@@ -3591,8 +3589,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       Block newBlock, DatanodeStorageInfo[] targets, boolean isStriped)
       throws IOException {
     assert hasWriteLock();
-    BlockInfoContiguous b = dir.addBlock(src, inodesInPath, newBlock, targets,
-        isStriped);
+    BlockInfo b = dir.addBlock(src, inodesInPath, newBlock, targets, isStriped);
     NameNode.stateChangeLog.info("BLOCK* allocate " + b + " for " + src);
     DatanodeStorageInfo.incrementBlocksScheduled(targets);
   }
@@ -3800,7 +3797,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
         BlockInfo bi = getStoredBlock(b);
         if (bi.isComplete()) {
           numRemovedComplete++;
-          if (bi.numNodes() >= blockManager.minReplication) {
+          if (blockManager.checkMinStorage(bi, bi.numNodes())) {
             numRemovedSafe++;
           }
         }
@@ -4029,7 +4026,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       curBlock = blocks[nrCompleteBlocks];
       if(!curBlock.isComplete())
         break;
-      assert blockManager.checkMinReplication(curBlock) :
+      assert blockManager.checkMinStorage(curBlock) :
               "A COMPLETE block is not minimally replicated in " + src;
     }
 
@@ -4064,8 +4061,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     BlockInfo penultimateBlock = pendingFile.getPenultimateBlock();
 
     // If penultimate block doesn't exist then its minReplication is met
-    boolean penultimateBlockMinReplication = penultimateBlock == null ||
-        blockManager.checkMinReplication(penultimateBlock);
+    boolean penultimateBlockMinStorage = penultimateBlock == null ||
+        blockManager.checkMinStorage(penultimateBlock);
 
     switch(lastBlockState) {
     case COMPLETE:
@@ -4073,8 +4070,8 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       break;
     case COMMITTED:
       // Close file if committed blocks are minimally replicated
-      if(penultimateBlockMinReplication &&
-          blockManager.checkMinReplication(lastBlock)) {
+      if(penultimateBlockMinStorage &&
+          blockManager.checkMinStorage(lastBlock)) {
         finalizeINodeFileUnderConstruction(src, pendingFile,
             iip.getLatestSnapshotId());
         NameNode.stateChangeLog.warn("BLOCK*"
@@ -4174,6 +4171,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
 
     // Adjust disk space consumption if required
+    // TODO: support EC files
     final long diff = fileINode.getPreferredBlockSize() - commitBlock.getNumBytes();    
     if (diff > 0) {
       try {
@@ -5066,8 +5064,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
   /**
    * Persist the new block (the last block of the given file).
-   * @param path
-   * @param file
    */
   private void persistNewBlock(String path, INodeFile file) {
     Preconditions.checkArgument(file.isUnderConstruction());
@@ -6183,7 +6179,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     assert hasWriteLock();
     checkNameNodeSafeMode("Cannot get next block ID");
     final long blockId = isStriped ?
-        blockIdManager.nextBlockGroupId() : blockIdManager.nextBlockId();
+        blockIdManager.nextStripedBlockId() : blockIdManager.nextContiguousBlockId();
     getEditLog().logAllocateBlockId(blockId);
     // NB: callers sync the log
     return blockId;
