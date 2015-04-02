@@ -29,6 +29,7 @@
   <properties>
     <maven.dependency.version>3.0</maven.dependency.version>
     <maven.plugin-tools.version>3.4</maven.plugin-tools.version>
+    <maven.shade.version>2.3</maven.shade.version>
   </properties>
   <dependencies>
     <dependency>
@@ -58,6 +59,21 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>${maven.shade.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <!-- shade conflicts with itself and our other maven internals
+             by including a combination of 3.x and 2.x
+          -->
+        <exclusion>
+          <groupId>org.apache.maven.shared</groupId>
+          <artifactId>maven-dependency-tree</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   <build>
