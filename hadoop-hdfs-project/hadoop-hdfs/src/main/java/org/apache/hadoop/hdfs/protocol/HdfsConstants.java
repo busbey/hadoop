@@ -179,5 +179,5 @@ public class HdfsConstants {
   public static final byte MAX_BLOCKS_IN_GROUP = 16;
 
   // The chunk size for striped block which is used by erasure coding
-  public static final int BLOCK_STRIPED_CHUNK_SIZE = 64 * 1024;
+  public static final int BLOCK_STRIPED_CELL_SIZE = 128 * 1024;
 }
