@@ -173,11 +173,17 @@ public class HdfsConstants {
   public static final byte WARM_STORAGE_POLICY_ID = 5;
   public static final byte COLD_STORAGE_POLICY_ID = 2;
 
-  public static final byte NUM_DATA_BLOCKS = 3;
-  public static final byte NUM_PARITY_BLOCKS = 2;
+
   public static final long BLOCK_GROUP_INDEX_MASK = 15;
   public static final byte MAX_BLOCKS_IN_GROUP = 16;
 
+  /*
+   * These values correspond to the values used by the system default schema.
+   * TODO: to be removed once all places use schema.
+   */
+
+  public static final byte NUM_DATA_BLOCKS = 6;
+  public static final byte NUM_PARITY_BLOCKS = 3;
   // The chunk size for striped block which is used by erasure coding
-  public static final int BLOCK_STRIPED_CELL_SIZE = 128 * 1024;
+  public static final int BLOCK_STRIPED_CELL_SIZE = 256 * 1024;
 }
