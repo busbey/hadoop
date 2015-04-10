@@ -468,8 +468,8 @@ public class FSDirectory implements Closeable {
     try {
       INodesInPath iip = addINode(existing, newNode);
       if (iip != null) {
-        // TODO: we will no longer use storage policy for "Erasure Coding Zone"
-        if (newNode.isStriped()) {
+        // check if the file is in an EC zone
+        if (getECPolicy(iip)) {
           newNode.addStripedBlocksFeature();
         }
         if (aclEntries != null) {

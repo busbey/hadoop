@@ -185,15 +185,11 @@ public class INodeFile extends INodeWithAdditionalFields
   public FileWithStripedBlocksFeature addStripedBlocksFeature() {
     assert blocks == null || blocks.length == 0:
         "The file contains contiguous blocks";
-    assert !isWithStripedBlocks();
+    assert !isStriped();
     this.setFileReplication((short) 0);
     FileWithStripedBlocksFeature sb = new FileWithStripedBlocksFeature();
     addFeature(sb);
     return sb;
-  }
-
-  public boolean isWithStripedBlocks() {
-    return getStripedBlocksFeature() != null;
   }
 
   /** Used to make sure there is no contiguous block related info */
@@ -431,7 +427,7 @@ public class INodeFile extends INodeWithAdditionalFields
   /** Set the replication factor of this file. */
   public final INodeFile setFileReplication(short replication,
       int latestSnapshotId) throws QuotaExceededException {
-    Preconditions.checkState(!isWithStripedBlocks(),
+    Preconditions.checkState(!isStriped(),
         "Cannot set replication to a file with striped blocks");
     recordModification(latestSnapshotId);
     setFileReplication(replication);
@@ -653,7 +649,7 @@ public class INodeFile extends INodeWithAdditionalFields
     long nsDelta = 1;
     final long ssDeltaNoReplication;
     short replication;
-    if (isWithStripedBlocks()) {
+    if (isStriped()) {
       return computeQuotaUsageWithStriped(bsps, counts);
     }
     FileWithSnapshotFeature sf = getFileWithSnapshotFeature();
@@ -695,11 +691,6 @@ public class INodeFile extends INodeWithAdditionalFields
 
   /**
    * Compute quota of striped file
-   * @param bsps
-   * @param counts
-   * @param useCache
-   * @param lastSnapshotId
-   * @return quota counts
    */
   public final QuotaCounts computeQuotaUsageWithStriped(
       BlockStoragePolicySuite bsps, QuotaCounts counts) {
@@ -828,7 +819,7 @@ public class INodeFile extends INodeWithAdditionalFields
    * Use preferred block size for the last block if it is under construction.
    */
   public final long storagespaceConsumed() {
-    if (isWithStripedBlocks()) {
+    if (isStriped()) {
       return storagespaceConsumedWithStriped();
     } else {
       return storagespaceConsumedNoReplication() * getBlockReplication();
