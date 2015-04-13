@@ -3074,7 +3074,6 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     final long blockSize;
     final short numTargets;
     final byte storagePolicyID;
-    final boolean isStriped;
     Node clientNode = null;
     String clientMachine = null;
 
@@ -3116,7 +3115,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       clientNode = blockManager.getDatanodeManager().getDatanodeByHost(
           clientMachine);
       // TODO: make block group size configurable (HDFS-7337)
-      isStriped = pendingFile.isStriped();
+      boolean isStriped = pendingFile.isStriped();
       numTargets = isStriped ?
           HdfsConstants.NUM_DATA_BLOCKS + HdfsConstants.NUM_PARITY_BLOCKS :
           pendingFile.getFileReplication();
@@ -3145,6 +3144,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       ExtendedBlock previous, DatanodeStorageInfo[] targets) throws IOException {
     Block newBlock = null;
     long offset;
+    boolean isStriped;
     checkOperation(OperationCategory.WRITE);
     waitForLoadingFSImage();
     writeLock();
@@ -3175,6 +3175,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
       commitOrCompleteLastBlock(pendingFile, fileState.iip,
                                 ExtendedBlock.getLocalBlock(previous));
 
+      isStriped = pendingFile.isStriped();
       // allocate new block, record block locations in INode.
       newBlock = createNewBlock(isStriped);
       saveAllocatedBlock(src, fileState.iip, newBlock, targets,
