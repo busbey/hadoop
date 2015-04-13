@@ -66,6 +66,7 @@ import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.server.namenode.INode.BlocksMapUpdateInfo;
 import org.apache.hadoop.hdfs.util.ByteArray;
 import org.apache.hadoop.hdfs.util.EnumCounters;
+import org.apache.hadoop.io.erasurecode.ECSchema;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -414,11 +415,12 @@ public class FSDirectory implements Closeable {
    * Add the given filename to the fs.
    * @return the new INodesInPath instance that contains the new INode
    */
-  INodesInPath addFile(INodesInPath existing, String localName, PermissionStatus
-      permissions, short replication, long preferredBlockSize,
+  INodesInPath addFile(INodesInPath existing, String localName,
+      PermissionStatus permissions, short replication, long preferredBlockSize,
       String clientName, String clientMachine)
-    throws FileAlreadyExistsException, QuotaExceededException,
-      UnresolvedLinkException, SnapshotAccessControlException, AclException {
+      throws FileAlreadyExistsException, QuotaExceededException,
+      UnresolvedLinkException, SnapshotAccessControlException, AclException,
+      IOException {
 
     long modTime = now();
     INodeFile newNode = newINodeFile(allocateNewInodeId(), permissions, modTime,
@@ -1400,20 +1402,24 @@ public class FSDirectory implements Closeable {
     }
   }
 
-  XAttr createErasureCodingZone(String src)
+  XAttr createErasureCodingZone(String src, ECSchema schema)
       throws IOException {
     writeLock();
     try {
-      return ecZoneManager.createErasureCodingZone(src);
+      return ecZoneManager.createErasureCodingZone(src, schema);
     } finally {
       writeUnlock();
     }
   }
 
-  public boolean getECPolicy(INodesInPath iip) {
+  public boolean getECPolicy(INodesInPath iip) throws IOException {
+    return getECSchema(iip) != null;
+  }
+
+  ECSchema getECSchema(INodesInPath iip) throws IOException {
     readLock();
     try {
-      return ecZoneManager.getECPolicy(iip);
+      return ecZoneManager.getECSchema(iip);
     } finally {
       readUnlock();
     }
