@@ -2924,15 +2924,6 @@ public class BlockManager {
   }
 
   /**
-   * Set the value of whether there are any non-EC blocks using StripedID.
-   *
-   * @param has - the value of whether there are any non-EC blocks using StripedID.
-   */
-  public void hasNonEcBlockUsingStripedID(boolean has){
-    hasNonEcBlockUsingStripedID = has;
-  }
-
-  /**
    * Process a single possibly misreplicated block. This adds it to the
    * appropriate queues if necessary, and returns a result code indicating
    * what happened with it.
@@ -3528,7 +3519,7 @@ public class BlockManager {
     if (BlockIdManager.isStripedBlockID(block.getBlockId())) {
       info = blocksMap.getStoredBlock(
           new Block(BlockIdManager.convertToStripedID(block.getBlockId())));
-      if ((info == null) && hasNonEcBlockUsingStripedID()){
+      if ((info == null) && hasNonEcBlockUsingStripedID){
         info = blocksMap.getStoredBlock(block);
       }
     } else {
@@ -3712,10 +3703,9 @@ public class BlockManager {
    */
   public BlockInfo addBlockCollectionWithCheck(
       BlockInfo block, BlockCollection bc) {
-    if (!hasNonEcBlockUsingStripedID()){
-      if (BlockIdManager.isStripedBlockID(block.getBlockId())) {
-        hasNonEcBlockUsingStripedID(true);
-      }
+    if (!hasNonEcBlockUsingStripedID && !block.isStriped() &&
+        BlockIdManager.isStripedBlockID(block.getBlockId())) {
+      hasNonEcBlockUsingStripedID = true;
     }
     return addBlockCollection(block, bc);
   }
