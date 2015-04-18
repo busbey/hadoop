@@ -433,7 +433,7 @@ public class FSDirectory implements Closeable {
     writeLock();
     try {
       newiip = addINode(existing, newNode);
-      if (newiip != null && getECPolicy(newiip)) {
+      if (newiip != null && isInECZone(newiip)) {
         newNode.addStripedBlocksFeature();
       }
     } finally {
@@ -472,7 +472,7 @@ public class FSDirectory implements Closeable {
       INodesInPath iip = addINode(existing, newNode);
       if (iip != null) {
         // check if the file is in an EC zone
-        if (getECPolicy(iip)) {
+        if (isInECZone(iip)) {
           newNode.addStripedBlocksFeature();
         }
         if (aclEntries != null) {
@@ -1413,7 +1413,7 @@ public class FSDirectory implements Closeable {
     }
   }
 
-  public boolean getECPolicy(INodesInPath iip) throws IOException {
+  public boolean isInECZone(INodesInPath iip) throws IOException {
     return getECSchema(iip) != null;
   }
 
