@@ -3329,7 +3329,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     final LocatedBlock lBlk;
     if (blk.isStriped()) {
       assert blk instanceof BlockInfoStripedUnderConstruction;
-      lBlk = new LocatedStripedBlock(getExtendedBlock(blk), locs,
+      lBlk = BlockManager.newLocatedStripedBlock(getExtendedBlock(blk), locs,
           ((BlockInfoStripedUnderConstruction) blk).getBlockIndices(),
           offset, false);
     } else {
