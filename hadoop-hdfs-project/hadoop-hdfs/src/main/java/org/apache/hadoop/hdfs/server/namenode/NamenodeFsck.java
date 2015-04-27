@@ -629,9 +629,9 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
         report.append(" repl=" + liveReplicas);
         if (showLocations || showRacks || showReplicaDetails) {
           StringBuilder sb = new StringBuilder("[");
-          Iterable<DatanodeStorageInfo> storages = bm.getStorages(block.getLocalBlock());
-          for (Iterator<DatanodeStorageInfo> iterator = storages.iterator(); iterator.hasNext();) {
-            DatanodeStorageInfo storage = iterator.next();
+          DatanodeStorageInfo[] storages = bm.getStorages(storedBlock);
+          for (int i = 0; i < storages.length; i++) {
+            DatanodeStorageInfo storage = storages[i];
             DatanodeDescriptor dnDesc = storage.getDatanodeDescriptor();
             if (showRacks) {
               sb.append(NodeBase.getPath(dnDesc));
@@ -640,7 +640,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
                   .getStorageType()));
             }
             if (showReplicaDetails) {
-              LightWeightLinkedSet<Block> blocksExcess =
+              LightWeightLinkedSet<BlockInfo> blocksExcess =
                   bm.excessReplicateMap.get(dnDesc.getDatanodeUuid());
               Collection<DatanodeDescriptor> corruptReplicas =
                   bm.getCorruptReplicas(block.getLocalBlock());
@@ -661,7 +661,7 @@ public class NamenodeFsck implements DataEncryptionKeyFactory {
                 sb.append("LIVE)");
               }
             }
-            if (iterator.hasNext()) {
+            if (i < storages.length - 1) {
               sb.append(", ");
             }
           }
