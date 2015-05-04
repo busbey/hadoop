@@ -2446,6 +2446,16 @@ function postapply
 
   compute_gitdiff "${GITDIFFLINES}"
 
+  for plugin in ${PLUGINS}; do
+    verify_patchdir_still_exists
+    if declare -f ${plugin}_postapply >/dev/null 2>&1; then
+      hadoop_debug "Running ${plugin}_postapply"
+      #shellcheck disable=SC2086
+      ${plugin}_postapply
+      (( RESULT = RESULT + $? ))
+    fi
+  done
+
   check_javac
   retval=$?
   if [[ ${retval} -gt 1 ]] ; then
@@ -2466,15 +2476,6 @@ function postapply
 
   done
 
-  for plugin in ${PLUGINS}; do
-    verify_patchdir_still_exists
-    if declare -f ${plugin}_postapply >/dev/null 2>&1; then
-      hadoop_debug "Running ${plugin}_postapply"
-      #shellcheck disable=SC2086
-      ${plugin}_postapply
-      (( RESULT = RESULT + $? ))
-    fi
-  done
 }
 
 ## @description  Driver to execute _postinstall routines
