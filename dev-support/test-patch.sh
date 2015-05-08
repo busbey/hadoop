@@ -1347,7 +1347,7 @@ function locate_patch
 
       relativePatchURL=$(${GREP} -o '"/jira/secure/attachment/[0-9]*/[^"]*' "${PATCH_DIR}/jira" | ${GREP} -v -e 'htm[l]*$' | sort | tail -1 | ${GREP} -o '/jira/secure/attachment/[0-9]*/[^"]*')
       PATCHURL="http://issues.apache.org${relativePatchURL}"
-      if [[ ! ${PATCHURL} =~ \.patch$ ]]; then
+      if [[ ! ${PATCHURL} =~ \.patch(\.txt)?$ ]]; then
         notSureIfPatch=true
       fi
       patchNum=$(echo "${PATCHURL}" | ${GREP} -o '[0-9]*/' | ${GREP} -o '[0-9]*')
