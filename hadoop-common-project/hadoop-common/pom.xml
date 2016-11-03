@@ -407,6 +407,7 @@
               <goal>protoc</goal>
             </goals>
             <configuration>
+              <testSource>true</testSource>
               <protocVersion>${protobuf.version}</protocVersion>
               <protocCommand>${protoc.path}</protocCommand>
               <imports>

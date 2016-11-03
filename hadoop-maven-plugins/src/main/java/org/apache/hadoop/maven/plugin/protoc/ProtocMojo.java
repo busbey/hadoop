@@ -63,6 +63,10 @@ public class ProtocMojo extends AbstractMojo {
       "${project.build.directory}/hadoop-maven-plugins-protoc-checksums.json")
   private String checksumPath;
 
+  /** Add as test source rather than main source. */
+  @Parameter(defaultValue = "false")
+  private boolean testSource;
+
   /**
    * Compares include and source file checksums against previously computed
    * checksums stored in a json file in the build directory.
@@ -269,7 +273,11 @@ public class ProtocMojo extends AbstractMojo {
     } catch (Throwable ex) {
       throw new MojoExecutionException(ex.toString(), ex);
     }
-    project.addCompileSourceRoot(output.getAbsolutePath());
+    if (testSource) {
+      project.addTestCompileSourceRoot(output.getAbsolutePath());
+    } else {
+      project.addCompileSourceRoot(output.getAbsolutePath());
+    }
   }
 
 }
